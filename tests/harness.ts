@@ -64,3 +64,16 @@ export function makeRoom(storage = new MemoryStorage()) {
   };
   return api;
 }
+
+export type TestRoom = ReturnType<typeof makeRoom>;
+export type Clock = ReturnType<typeof fakeClock>;
+
+/** Runs `fn` with a fresh room and a fake clock, and always puts the real clock back. */
+export async function withRoom(fn: (r: TestRoom, clock: Clock) => Promise<void>) {
+  const clock = fakeClock();
+  try {
+    await fn(makeRoom(), clock);
+  } finally {
+    clock.restore();
+  }
+}
