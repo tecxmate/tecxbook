@@ -1,0 +1,37 @@
+{
+  "name": "tecxbook",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "demo:build": "vite build --config vite.demo.config.ts",
+    "demo": "npm run demo:build && wrangler dev -c demo/wrangler.jsonc --ip 0.0.0.0",
+    "demo:deploy": "npm run demo:build && wrangler deploy -c demo/wrangler.jsonc",
+    "check": "npm run typecheck && npm run lint && npm test && npm run demo:build"
+  },
+  "dependencies": {
+    "lucide-react": "0.577.0",
+    "qrcode-generator": "2.0.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.4",
+    "@types/node": "24.12.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.1",
+    "eslint": "9.39.4",
+    "eslint-plugin-react-hooks": "7.0.1",
+    "eslint-plugin-react-refresh": "0.5.2",
+    "globals": "17.4.0",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.57.1",
+    "vite": "8.0.1",
+    "wrangler": "4.149.0"
+  }
+}

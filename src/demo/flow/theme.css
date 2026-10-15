@@ -1,0 +1,51 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Scribe Quest theme for Games 1 and 2 (phone: player.css, projector:
+   host.css). The same 16-bit world as Game 3 (quest.css) and its board
+   (demo.css): night background with a dot grid, paper cards with ink pixel
+   borders, gold for the one thing to press. Pixel face for labels, chips,
+   buttons and numbers; Atkinson Hyperlegible for anything people read.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.fl,
+.fh {
+  --night: #262144;
+  --night-2: #322b5c;
+  --paper: #fff8ec;
+  --ink: #262144;
+  --ink-soft: #6a6491;
+  --gold: #ffc93c;
+  --coral: #ff7a59;
+  --sky: #4fa3e3;
+  --plum: #8b6be0;
+  --mint: #3fbfa6;
+  --good-bg: #d6f3ea;
+  --bad-bg: #ffe0d6;
+  --alert: #e5484d;
+  --muted-on-night: #cfc6ee;
+  --font-pixel: 'Silkscreen', 'Courier New', monospace;
+  --font-read: 'Atkinson Hyperlegible', 'Trebuchet MS', system-ui, sans-serif;
+  color-scheme: dark;
+  background-color: var(--night);
+  background-image: radial-gradient(rgba(255, 248, 236, 0.07) 1px, transparent 1.5px);
+  background-size: 18px 18px;
+  color: var(--paper);
+  font-family: var(--font-read);
+  font-variant-ligatures: none;
+  line-height: 1.4;
+}
+.fl *,
+.fh * { box-sizing: border-box; min-width: 0; }
+:where(.fl, .fh) button { font: inherit; color: inherit; cursor: pointer; }
+:where(.fl, .fh) button:disabled { cursor: not-allowed; }
+.fl :focus-visible,
+.fh :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+/* Game 1 groups, the same colours as the Game 3 teams. */
+[data-note="A"] { --note: var(--coral); }
+[data-note="B"] { --note: var(--sky); }
+[data-note="C"] { --note: var(--plum); }
+
+/* Screen change: content fades and rises in. */
+@keyframes sq-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.sq-enter { animation: sq-enter 180ms ease-out both; }
+@media (prefers-reduced-motion: reduce) { .sq-enter { animation: none; } }

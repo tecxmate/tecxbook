@@ -1,0 +1,20 @@
+// Cloudflare Worker for the classroom AI Scribe demo.
+// `npm run demo` runs it locally; `npm run demo:deploy` publishes it to
+// https://ai.tecxmate.com
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "ai-scribe-clinic",
+  "main": "worker.ts",
+  "compatibility_date": "2025-09-01",
+  "assets": { "directory": "../dist-demo" },
+  // Cloudflare creates the DNS record and certificate on deploy
+  // (tecxmate.com is a zone in the same account). The workers.dev
+  // address stays on as a backup.
+  "routes": [{ "pattern": "ai.tecxmate.com", "custom_domain": true }],
+  "workers_dev": true,
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "ResultsRoom" }]
+  },
+  // SQLite-backed Durable Objects are available on the Workers Free plan.
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ResultsRoom"] }]
+}

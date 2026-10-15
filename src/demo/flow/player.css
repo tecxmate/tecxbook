@@ -1,0 +1,489 @@
+/* Games 1 and 2 on a student's phone, in the Scribe Quest look (the Game 3
+   phone, quest.css): night with a dot grid, paper cards with ink pixel
+   borders, one gold button per screen. Tokens: theme.css. */
+@import './theme.css';
+
+/* ── Page ── */
+html.fl-page,
+html.fl-page body { background: #262144; overflow-x: clip; }
+
+/* clip, not hidden: hidden would make .fl the scroll box and break the sticky action bar. */
+.fl {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  font-size: 17px;
+  overflow-x: clip;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.fl.fl--alert {
+  background-color: var(--alert);
+  background-image: radial-gradient(rgba(255, 248, 236, 0.14) 1px, transparent 1.5px);
+}
+.fl-wrap {
+  flex: 1 0 auto;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 12px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.fl-screen,
+.fl-fill { flex: 1 0 auto; display: flex; flex-direction: column; gap: 14px; }
+.fl-screen > :last-child:not(.fl-actions, .fl-form, .fl-fill) { margin-bottom: calc(20px + env(safe-area-inset-bottom)); }
+
+/* Buttons never move or shrink when pressed (the app-wide press scale is off here). */
+.fl button:active:not(:disabled) { transform: none !important; }
+
+/* ── Type ── */
+.fl-h1 { margin: 0; font-family: var(--font-read); font-weight: 700; font-size: 26px; line-height: 1.2; color: var(--paper); }
+.fl-lead { margin: 0; font-size: 18px; line-height: 1.4; color: var(--muted-on-night); }
+.fl-kicker { margin: 0; font-family: var(--font-pixel); font-size: 12px; letter-spacing: 0.06em; color: var(--gold); }
+.fl-label { margin: 6px 0 0; font-family: var(--font-pixel); font-size: 13px; letter-spacing: 0.03em; color: var(--gold); }
+.fl-small { margin: 0; font-size: 15px; color: var(--muted-on-night); }
+.fl-head { display: flex; flex-direction: column; gap: 4px; }
+.fl-error {
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--bad-bg);
+  color: var(--ink);
+  border: 3px solid var(--coral);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* ── Top bar (the Game 3 HUD) ── */
+.fl-hud { display: flex; align-items: center; gap: 6px; min-height: 34px; }
+.fl-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 8px;
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--paper);
+  background: var(--night-2);
+  border: 3px solid var(--paper);
+}
+.fl-chip--game { color: var(--gold); }
+.fl-chip[data-note] { border-color: var(--note); }
+.fl-hud > :last-child:not(:first-child) { margin-left: auto; }
+.fl-chip--name { display: block; max-width: 42vw; line-height: 28px; overflow: hidden; text-overflow: ellipsis; }
+.fl-clock { min-width: 74px; font-size: 16px; font-variant-numeric: tabular-nums; }
+.fl-clock.low { border-color: var(--coral); color: var(--coral); animation: fl-blink 0.5s steps(2) infinite; }
+@keyframes fl-blink { 50% { opacity: 0.35; } }
+
+/* Lost connection: the screen stays usable and says so. */
+.fl-offline {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  margin: 0;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  background: var(--gold);
+  color: var(--ink);
+  border-bottom: 3px solid var(--ink);
+}
+
+/* ── Pixel buttons (the Game 3 .px-btn: they darken, never move) ── */
+.fl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 10px 16px;
+  font-family: var(--font-pixel);
+  font-size: 16px;
+  letter-spacing: 0.03em;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: 0 0 0 3px var(--paper), 0 7px 0 0 #15112b;
+}
+.fl-btn:active:not(:disabled) { filter: brightness(0.9); }
+.fl-btn--go { background: var(--gold); font-size: 17px; }
+.fl-btn:disabled,
+.fl-btn[aria-disabled="true"] { opacity: 0.45; filter: none; }
+.fl-btn:disabled { cursor: not-allowed; }
+.fl-btn--ghost { background: transparent; color: var(--paper); border-color: var(--paper); box-shadow: none; }
+.fl-btn--small { min-height: 44px; padding: 6px 12px; font-size: 12px; }
+/* On a paper card the button uses the plain Game 3 shadow. */
+.fl-sheet .fl-btn { box-shadow: 0 4px 0 var(--ink); }
+.fl-link { align-self: center; }
+
+/* The one thing to press sits at the bottom and stays on screen. */
+.fl-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin: auto -16px 0;
+  padding: 16px 22px calc(18px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: linear-gradient(rgba(38, 33, 68, 0), var(--night) 14px);
+}
+.fl-actions .fl-btn { width: 100%; }
+
+/* ── Look up (the phone goes quiet while the lecturer talks) ── */
+.fl-look {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 0 6vh;
+  text-align: center;
+}
+.fl-look .fl-h1 { max-width: 20ch; }
+.fl-look .fl-lead { max-width: 30ch; }
+.fl-look-icon {
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  margin-bottom: 4px;
+  color: var(--gold);
+  background: var(--night-2);
+  border: 3px solid var(--paper);
+  box-shadow: 0 6px 0 #15112b;
+}
+.fl-pill {
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  padding: 6px 10px;
+  border: 3px solid var(--paper);
+  background: var(--night-2);
+}
+
+/* ── Join ── */
+.fl-form { flex: 1 0 auto; display: flex; flex-direction: column; gap: 10px; padding-top: 4vh; }
+.fl-logo {
+  margin: 0 0 10px;
+  font-family: var(--font-pixel);
+  font-weight: 700;
+  font-size: clamp(38px, 12.5vw, 58px);
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  color: var(--paper);
+  text-shadow: 3px 3px 0 #15112b;
+}
+.fl-logo b { display: block; color: var(--gold); text-shadow: 4px 4px 0 var(--coral), 7px 7px 0 #15112b; }
+.fl-input {
+  width: 100%;
+  min-height: 54px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 20px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: 0 0 0 3px var(--paper);
+  border-radius: 0;
+}
+.fl-input::placeholder { color: #a39cc4; }
+.fl-input--code { font-family: var(--font-pixel); font-size: 32px; letter-spacing: 0.2em; text-align: center; }
+
+.fl-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-self: stretch; }
+.fl-groups button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 66px;
+  padding: 6px 4px;
+  font-family: var(--font-pixel);
+  font-size: 26px;
+  line-height: 1;
+  color: var(--paper);
+  background: var(--night-2);
+  border: 3px solid var(--note);
+}
+.fl-groups button small { font-family: var(--font-read); font-size: 14px; color: var(--muted-on-night); }
+.fl-groups button.on { background: var(--note); color: var(--ink); box-shadow: 0 0 0 3px var(--paper); }
+.fl-groups button.on small { color: var(--ink); font-weight: 700; }
+.fl-groups button[data-note="C"].on,
+.fl-groups button[data-note="C"].on small { color: var(--paper); }
+.fl-groups button:disabled { cursor: wait; }
+
+/* Lobby */
+.fl-group-now {
+  margin: 4px 0;
+  padding: 10px 22px;
+  font-family: var(--font-pixel);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1;
+  color: var(--ink);
+  background: var(--note);
+  border: 3px solid var(--ink);
+  box-shadow: 0 0 0 3px var(--paper), 0 9px 0 0 #15112b;
+}
+.fl-group-now[data-note="C"] { color: var(--paper); }
+.fl-change { align-self: stretch; display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
+.fl-change .fl-label { margin: 0; color: var(--muted-on-night); }
+.fl-change .fl-groups button { min-height: 56px; font-size: 22px; }
+
+/* ── Paper card (the Game 3 panel) ── */
+.fl-card {
+  margin: 6px;
+  padding: 12px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--ink);
+}
+
+/* ── Game 1 ── */
+.fl-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: #fff4cf;
+  border: 3px solid var(--gold);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.fl-hints p { margin: 0; }
+.fl-hints b { display: block; font-family: var(--font-pixel); font-size: 11px; font-weight: 400; letter-spacing: 0.04em; color: #8a5a00; }
+
+.fl-note { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.fl-note-head { font-family: var(--font-pixel); font-size: 12px; letter-spacing: 0.04em; color: var(--ink-soft); }
+.fl-note-foot { margin: 0; font-size: 13px; color: var(--ink-soft); }
+.fl-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.fl-line {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 54px;
+  padding: 9px 10px;
+  text-align: left;
+  font-family: var(--font-read);
+  font-size: 17px;
+  line-height: 1.3;
+  color: var(--ink);
+  background: #f4e9d5;
+  border: 3px solid #e3d4ba;
+}
+.fl-box {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+}
+/* Circled: a coral frame and a ticked box. The border width never changes, so nothing moves. */
+.fl-line.circled { background: var(--bad-bg); border-color: var(--coral); }
+.fl-line.circled .fl-box { background: var(--coral); }
+.fl-line:active { filter: brightness(0.95); }
+
+/* The confirm panel: slides up over a dimmed screen. */
+.fl-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px 16px calc(22px + env(safe-area-inset-bottom));
+  background: rgba(21, 17, 43, 0.8);
+}
+.fl-sheet {
+  width: 100%;
+  max-width: 476px;
+  margin: 6px;
+  padding: 18px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--ink);
+}
+.fl-sheet h2 { margin: 0; font-size: 25px; font-weight: 700; line-height: 1.2; }
+.fl-sheet p { margin: 0; font-size: 17px; color: var(--ink-soft); }
+.fl-sheet .fl-error { color: var(--ink); }
+.fl-sheet-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 12px; margin-top: 10px; }
+
+/* Your marked note on the answer screens. */
+.fl-note--marked { align-self: stretch; }
+.fl-mark {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 8px;
+  padding: 8px 10px;
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--ink);
+  border: 3px solid transparent;
+}
+.fl-mark > span { font-weight: 700; }
+li.fl-mark--caught { background: var(--good-bg); border-color: var(--mint); }
+li.fl-mark--caught span { color: #1d8f78; }
+li.fl-mark--missed { border: 3px dashed var(--coral); }
+li.fl-mark--missed span { color: #c4462a; }
+li.fl-mark--false { background: var(--bad-bg); }
+li.fl-mark--false span { color: #c4462a; }
+.fl-legend { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; font-size: 13px; font-weight: 700; }
+.fl-legend span { padding: 2px 6px; border: 2px solid var(--ink); }
+.fl-legend .fl-mark--caught { background: var(--good-bg); }
+.fl-legend .fl-mark--missed { border-style: dashed; border-color: var(--coral); }
+.fl-legend .fl-mark--false { background: var(--bad-bg); }
+
+/* ── Game 2 ── */
+.fl-alert {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-bottom: 8vh;
+  text-align: center;
+  color: var(--paper);
+}
+.fl-alert-title { font-family: var(--font-pixel); font-weight: 700; font-size: 46px; line-height: 1; letter-spacing: 0.04em; text-shadow: 4px 4px 0 #7a1d22; }
+.fl-alert-count {
+  font-family: var(--font-pixel);
+  font-weight: 700;
+  font-size: 128px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 6px 6px 0 #7a1d22;
+}
+.fl-alert p { margin: 0; font-size: 20px; font-weight: 700; }
+.fl.fl--alert .fl-chip { background: #b8343a; }
+
+.fl-vote { gap: 18px; padding-top: 2vh; }
+.fl-vote-big { display: flex; flex-direction: column; gap: 18px; }
+.fl-btn--vote { justify-content: flex-start; min-height: 92px; padding: 12px 18px; gap: 16px; font-size: 22px; }
+.fl-vote-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  font-family: var(--font-read);
+  font-weight: 700;
+  font-size: 26px;
+  background: var(--night);
+  color: var(--paper);
+  border: 3px solid var(--ink);
+}
+.fl-vote-lines { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
+.fl-btn--line { min-height: 56px; padding: 8px 10px; font-family: var(--font-read); font-weight: 700; font-size: 18px; letter-spacing: 0; }
+.fl-btn--none { grid-column: 1 / -1; margin-top: 4px; }
+
+/* One-tap questions (the guess and the poll). */
+.fl-opts { display: flex; flex-direction: column; gap: 16px; }
+.fl-opt { justify-content: flex-start; min-height: 60px; padding: 10px 14px; gap: 12px; text-align: left; font-family: var(--font-read); font-weight: 700; font-size: 17px; letter-spacing: 0; line-height: 1.25; }
+.fl-opt-letter {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  font-family: var(--font-pixel);
+  font-size: 16px;
+  background: var(--night);
+  color: var(--paper);
+  border: 3px solid var(--ink);
+}
+
+/* The picked answer turns gold and stays bright; the others fade and lock. */
+.fl-btn.on { background: var(--gold); }
+.fl-btn.on:disabled { opacity: 1; }
+.fl-btn.on::after { content: '✓'; margin-left: auto; padding-left: 8px; font-family: var(--font-read); font-weight: 700; font-size: 22px; }
+.fl-btn--line.on::after { margin-left: 0; }
+
+/* ── Scores ── */
+.fl-total {
+  margin: 6px;
+  min-width: 180px;
+  padding: 8px 22px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--ink);
+  background: var(--gold);
+  border: 3px solid var(--ink);
+  box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--ink);
+}
+.fl-total span { font-family: var(--font-pixel); font-size: 11px; letter-spacing: 0.04em; }
+.fl-total b { font-family: var(--font-pixel); font-weight: 700; font-size: 36px; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.fl-total small { font-family: var(--font-pixel); font-size: 12px; }
+.fl-total--big b { font-size: 54px; }
+.fl-scores-card { align-self: stretch; text-align: left; }
+.fl-scores { width: 100%; border-collapse: collapse; font-size: 16px; font-variant-numeric: tabular-nums; }
+.fl-scores th { padding: 8px 2px; font-weight: 400; text-align: left; border-bottom: 2px dotted #d9cfe9; }
+.fl-scores td { padding: 8px 2px 8px 10px; text-align: right; font-family: var(--font-pixel); font-weight: 700; font-size: 18px; border-bottom: 2px dotted #d9cfe9; }
+
+/* ── Small phones ── */
+@media (max-width: 360px) {
+  .fl-wrap { padding-inline: 12px; }
+  .fl-actions { margin-inline: -12px; padding-inline: 18px; }
+  .fl-h1 { font-size: 23px; }
+  .fl-lead { font-size: 17px; }
+  .fl-chip { padding: 0 6px; font-size: 11px; }
+  .fl-clock { min-width: 64px; font-size: 15px; }
+  .fl-line { font-size: 16px; }
+  .fl-look-icon { width: 80px; height: 80px; }
+}
+@media (max-height: 600px) {
+  .fl-look { gap: 10px; padding-bottom: 3vh; }
+  .fl-alert-count { font-size: 104px; }
+  .fl-btn--vote { min-height: 80px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fl-clock.low { animation: none; }
+}
+
+/* Where to look now: a strip under the top bar on every screen. */
+.fl-cue { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0; padding: 8px 10px; border: 3px solid var(--ink); font-family: var(--font-pixel); font-size: 13px; letter-spacing: 0.05em; }
+.fl-cue--phone { background: var(--mint); color: var(--ink); }
+.fl-cue--screen { background: var(--gold); color: var(--ink); }
+
+/* Numbers in a plain bold face: pixel digits are hard to read from the back of a room. */
+.fl-clock,
+.fl-total b,
+.fl-scores td,
+.fl-input--code,
+.fl-alert-count,
+.fl-groups button small {
+  font-family: 'Atkinson Hyperlegible', 'Trebuchet MS', system-ui, sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  font-variant-numeric: tabular-nums;
+}

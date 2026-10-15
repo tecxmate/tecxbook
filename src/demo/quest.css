@@ -1,0 +1,560 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Game 3, THE CLINIC (Scribe Quest phone game). A colourful 16-bit clinic; one screen, no page
+   scrolling. Pixel face for short labels only; reading text uses Atkinson
+   Hyperlegible. The projector board keeps the clinic app's style (demo.css).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sq {
+  --night: #262144;
+  --night-2: #322b5c;
+  --paper: #fff8ec;
+  --ink: #262144;
+  --ink-soft: #6a6491;
+  --coral: #ff7a59;
+  --sky: #4fa3e3;
+  --plum: #8b6be0;
+  --mint: #3fbfa6;
+  --gold: #ffc93c;
+  --font-pixel: 'Silkscreen', 'Courier New', monospace;
+  --font-read: 'Atkinson Hyperlegible', 'Trebuchet MS', system-ui, sans-serif;
+  color-scheme: dark;
+  height: 100%;
+  background-color: var(--night);
+  background-image: radial-gradient(rgba(255, 248, 236, 0.07) 1px, transparent 1.5px);
+  background-size: 18px 18px;
+  color: var(--paper);
+  font-family: var(--font-read);
+  font-size: 17px;
+  line-height: 1.45;
+  font-variant-ligatures: none;
+  overflow: hidden;
+}
+.sq * { box-sizing: border-box; min-width: 0; }
+/* Low-specificity button reset, so every button class below wins. */
+:where(.sq) button { font: inherit; color: inherit; }
+.sq :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.sq [hidden] { display: none !important; }
+
+/* The page never scrolls while the game is open. */
+html.sq-lock,
+html.sq-lock body,
+html.sq-lock #root {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  background: #262144;
+}
+
+/* Menus may be taller than a small phone: they scroll inside, never sideways. */
+.sq-scroll { overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scroll-padding-bottom: 120px; }
+
+.q-app {
+  height: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding-inline: 16px;
+  padding-block: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sq-scroll .q-app { height: auto; min-height: 100%; }
+.q-app > * { flex: none; }
+
+/* A new screen, card or step fades up once (no layout shift; `backwards`
+   so no transform is left behind once it ends). */
+@keyframes q-enter { from { opacity: 0; transform: translateY(6px); } }
+.q-enter { animation: q-enter 180ms ease-out backwards; }
+
+/* ── HUD: GAME 3 · team ········ timer or back · sound ── */
+.q-hud { display: flex; align-items: center; gap: 6px; min-height: 44px; }
+.q-hud-end { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.q-logo { font-family: var(--font-pixel); font-weight: 700; font-size: 18px; letter-spacing: 0.04em; margin-right: 6px; white-space: nowrap; }
+.q-logo b { color: var(--gold); font-weight: 700; }
+.q-chip {
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  min-height: 44px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--paper);
+  background: var(--night-2);
+  white-space: nowrap;
+}
+.q-game-chip { border-color: var(--gold); color: var(--gold); }
+.q-sound { width: 44px; padding: 0; border-color: #5a5288; color: #b9b1d8; }
+.q-sound[aria-pressed="true"] { color: var(--paper); }
+.q-clock.stopped { border-color: var(--mint); color: var(--mint); }
+.q-chip[data-team="1"] { border-color: var(--coral); }
+.q-chip[data-team="2"] { border-color: var(--sky); }
+.q-chip[data-team="3"] { border-color: var(--plum); }
+.q-btn { cursor: pointer; color: var(--paper); }
+.q-back { min-width: 78px; text-align: center; background: var(--gold); color: var(--ink); border-color: var(--ink); box-shadow: 0 0 0 2px var(--paper); }
+.q-clock { font-variant-numeric: tabular-nums; min-width: 78px; text-align: center; }
+.q-clock.low { border-color: var(--coral); color: var(--coral); animation: q-blink 0.5s steps(2) infinite; }
+@keyframes q-blink { 50% { opacity: 0.35; } }
+
+/* ── Pixel buttons (no press wiggle: they darken instead of moving) ── */
+.px-btn {
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  padding: 10px 14px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 0 4px 0 var(--ink);
+  cursor: pointer;
+  text-align: center;
+}
+.px-btn:active { filter: brightness(0.92); }
+.px-btn:disabled { opacity: 0.45; cursor: not-allowed; filter: none; }
+.px-btn.big { font-size: 16px; padding: 12px 22px; background: var(--gold); min-height: 52px; }
+.px-btn.small { font-size: 11px; padding: 4px 10px; min-height: 44px; box-shadow: 0 3px 0 var(--ink); }
+.px-btn.ghost { background: transparent; color: #b9b1d8; border-color: #5a5288; box-shadow: none; }
+.px-btn.on { background: var(--gold); }
+
+/* ── Title ── */
+.q-title-screen {
+  max-width: 560px;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 12px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.q-title-top { display: flex; align-items: center; gap: 10px; }
+.q-brand { margin-right: auto; font-family: var(--font-pixel); font-weight: 700; font-size: 14px; letter-spacing: 0.04em; white-space: nowrap; }
+.q-brand b { color: var(--gold); font-weight: 700; }
+.q-logo-big {
+  margin: 4px 0 0;
+  font-family: var(--font-pixel);
+  font-weight: 700;
+  font-size: clamp(36px, 12vw, 64px);
+  line-height: 0.95;
+  color: var(--gold);
+  text-shadow: 4px 4px 0 var(--coral), 8px 8px 0 #18142f;
+}
+.q-intro { margin: 0; font-size: 17px; }
+/* PRESS START stays in reach at the bottom while the menu scrolls. */
+.q-start {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  padding: 14px 0 calc(12px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: linear-gradient(rgba(38, 33, 68, 0), var(--night) 14px);
+}
+.q-start .px-btn { width: 100%; }
+.q-start .q-small { text-align: center; }
+.q-teams { display: flex; flex-direction: column; gap: 10px; }
+.q-team {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 10px;
+  text-align: left;
+  padding: 8px 12px;
+  background: var(--night-2);
+  border: 3px solid var(--paper);
+  cursor: pointer;
+}
+.q-team-name { font-family: var(--font-pixel); font-weight: 700; font-size: 16px; }
+.q-team-mode { font-weight: 700; justify-self: end; }
+.q-team-tag { grid-column: 1 / -1; font-size: 14px; color: #d6cff0; }
+.q-team.on[data-team="1"] { background: var(--coral); color: var(--ink); }
+.q-team.on[data-team="2"] { background: var(--sky); color: var(--ink); }
+.q-team.on[data-team="3"] { background: var(--plum); color: var(--paper); }
+.q-team.on .q-team-tag { color: inherit; }
+.q-label { margin: 6px 0 0; font-family: var(--font-pixel); font-weight: 400; font-size: 13px; color: var(--gold); }
+.q-roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.q-role {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: 8px 10px;
+  background: var(--night-2);
+  border: 3px solid var(--paper);
+  cursor: pointer;
+}
+.q-role-name { font-family: var(--font-pixel); font-weight: 700; font-size: 15px; }
+.q-role-reads { font-family: var(--font-pixel); font-size: 10px; color: var(--gold); }
+.q-role-job { font-size: 14px; line-height: 1.3; color: #d6cff0; }
+.q-role.on { background: var(--gold); color: var(--ink); }
+.q-role.on .q-role-reads, .q-role.on .q-role-job { color: var(--ink); }
+@media (max-width: 420px) {
+  .q-roles { grid-template-columns: minmax(0, 1fr); }
+  .q-role { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: baseline; }
+  .q-role-reads { justify-self: end; }
+  .q-role-job { grid-column: 1 / -1; }
+}
+.q-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 17px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: 0 0 0 3px var(--paper);
+}
+.q-small { margin: 0; font-size: 14px; color: #b9b1d8; }
+
+/* ── Patient list ── */
+.q-box { background: var(--night-2); border: 4px solid var(--paper); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.q-h2 { margin: 0; font-family: var(--font-pixel); font-size: 15px; color: var(--gold); }
+.q-sub { margin: 0; font-size: 15px; color: #d6cff0; }
+.q-patients { display: flex; flex-direction: column; gap: 10px; }
+.q-patient {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  text-align: left;
+  background: var(--paper);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 0 4px 0 var(--ink);
+  cursor: pointer;
+}
+.q-patient-num { font-family: var(--font-pixel); font-weight: 700; font-size: 20px; width: 36px; height: 36px; display: grid; place-items: center; background: var(--gold); border: 3px solid var(--ink); flex: none; }
+.q-patient-info { flex: 1; display: flex; flex-direction: column; }
+.q-patient-info span { color: var(--ink-soft); font-size: 15px; }
+.q-patient-state { font-family: var(--font-pixel); font-size: 12px; white-space: nowrap; }
+.q-patient-state.done { color: #1d8f78; }
+.q-patient.only { box-shadow: 0 0 0 3px var(--gold), 0 4px 0 3px var(--gold); }
+.q-patient-tag { font-style: normal; font-weight: 700; font-size: 14px; color: #8a5a00; }
+.q-sub b { color: var(--paper); }
+/* Rare exits (change team or job): small, at the very bottom. */
+.q-leave { margin-top: auto; padding: 8px 0 calc(4px + env(safe-area-inset-bottom)); display: flex; justify-content: center; }
+
+/* ── In-page confirm ── */
+.q-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(24, 20, 47, 0.78);
+}
+.q-confirm-box {
+  width: min(100%, 360px);
+  padding: 16px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--ink);
+}
+.q-confirm-box h2 { margin: 0; font-size: 22px; line-height: 1.2; }
+.q-confirm-box p { margin: 6px 0 0; color: var(--ink-soft); }
+.q-confirm-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+
+/* ── Stage ── */
+.q-app > .q-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 16px;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.q-game { display: flex; flex-direction: column; gap: 10px; min-height: 0; height: 100%; }
+/* The scene keeps its 16:9 shape and shrinks with the screen height. */
+.q-screen {
+  flex: none;
+  width: min(calc(100% - 16px), calc(34vh * 16 / 9));
+  width: min(calc(100% - 16px), calc(34dvh * 16 / 9));
+  margin: 8px auto 4px;
+  border: 4px solid var(--ink);
+  box-shadow: 0 0 0 4px var(--paper), 0 0 0 8px var(--ink);
+  background: #a8dfd9;
+}
+.q-screen canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: pointer;
+}
+
+/* ── Panel (dialogue and cards) ── */
+/* The panel's middle scrolls; the main button row stays pinned at its bottom. */
+.q-panel {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  border: 4px solid var(--ink);
+  box-shadow: 0 0 0 4px var(--paper), 0 0 0 8px var(--ink);
+  font-size: 19px;
+}
+.q-panel-in {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px 16px 14px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.q-who {
+  display: inline-block;
+  margin-bottom: 4px;
+  font-family: var(--font-pixel);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 4px 10px;
+  background: var(--ink);
+  color: var(--paper);
+  border: 3px solid var(--paper);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.q-who { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+.q-who[data-who="dentist"] { background: var(--sky); }
+.q-who[data-who="patient"] { background: var(--coral); }
+.q-who[data-who="ai"] { background: var(--plum); }
+.q-line { margin: 6px 0 0; min-height: 3.2em; }
+.q-tap { margin: 10px 0 0; min-height: 1.4em; font-family: var(--font-pixel); font-size: 12px; color: var(--ink-soft); animation: q-blink 0.8s steps(2) infinite; }
+.q-big-line { font-size: 22px; font-weight: 700; min-height: 0; }
+.q-progress { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 17px; }
+.q-progress li::before { content: '▢ '; }
+.q-progress li.done::before { content: '■ '; color: var(--mint); }
+.q-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+/* Chart card */
+.q-card-top { display: flex; align-items: center; gap: 8px; }
+.q-card-top .q-who { margin: 0; flex: none; }
+.q-card-top .px-btn { flex: none; }
+.q-pips { display: flex; gap: 2px; margin-right: auto; overflow: hidden; }
+.q-pip { flex: none; }
+.q-pip { width: 12px; height: 10px; border: 2px solid var(--ink); }
+.q-pip.done { background: var(--mint); }
+.q-pip.now { background: var(--gold); }
+/* Team 3's check keeps a fixed slot, so answers never jump when it changes. */
+.q-check {
+  margin-top: 10px;
+  min-height: 70px;
+  padding: 6px 10px;
+  border: 3px solid var(--mint);
+  background: #dcf5ee;
+  font-size: 15px;
+  line-height: 1.3;
+}
+.q-check b { display: block; font-family: var(--font-pixel); font-size: 11px; letter-spacing: 0.04em; }
+.q-check.warn { border-color: var(--coral); background: #ffe4dc; }
+.q-check.info { border-color: var(--gold); background: #fff4cf; }
+.q-field { font-family: var(--font-pixel); font-weight: 700; font-size: 20px; margin: 10px 0 2px; }
+.q-ask { margin: 0; font-size: 15px; color: var(--ink-soft); }
+.q-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+.q-opt {
+  position: relative;
+  min-height: 56px;
+  padding: 10px 24px;
+  font-family: var(--font-read);
+  font-size: 17px;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+.q-opt.picked { background: var(--gold); }
+.q-opt.picked::before { content: '✓'; position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-weight: 700; }
+/* Scribby's pick: a tag pinned to the corner, so the button keeps its size. */
+.q-bot-tag {
+  position: absolute;
+  top: -11px;
+  right: 8px;
+  padding: 1px 6px;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  line-height: 16px;
+  background: var(--plum);
+  color: var(--paper);
+  border: 2px solid var(--ink);
+  pointer-events: none;
+}
+.q-next-row {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px 16px 14px;
+  border-top: 3px dotted #d9cfe9;
+  background: var(--paper);
+}
+.q-next-row .px-btn { min-width: 160px; }
+.q-next-row.q-stack { flex-direction: column; }
+
+/* Result */
+.q-result-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
+.q-grade { font-family: var(--font-pixel); font-weight: 700; font-size: 28px; width: 50px; height: 50px; display: grid; place-items: center; background: var(--gold); border: 3px solid var(--ink); box-shadow: 0 4px 0 var(--ink); }
+.q-score { font-family: var(--font-pixel); font-weight: 700; font-size: 32px; line-height: 1; }
+.q-small-ink { font-family: var(--font-pixel); font-size: 11px; color: var(--ink-soft); }
+.q-hearts { margin-left: auto; font-size: 26px; letter-spacing: 2px; color: var(--coral); }
+.q-hearts .lost { color: #cfc6dd; }
+.q-quote { margin: 12px 0 0; font-size: 21px; font-weight: 700; line-height: 1.3; }
+.q-sendfail { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding: 6px 10px; background: #ffe0d6; border: 3px solid var(--coral); font-size: 15px; }
+.q-more { display: block; margin-top: 12px; min-height: 44px; padding: 0 4px; background: none; border: 0; font-family: var(--font-pixel) !important; font-size: 12px; color: var(--ink-soft) !important; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+.q-details { border-top: 3px dotted #d9cfe9; padding-top: 4px; }
+.q-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.q-badge { font-family: var(--font-pixel); font-size: 11px; padding: 4px 8px; border: 2px solid var(--ink); background: var(--mint); }
+.q-badge.boo { background: #ffd2c6; }
+.q-breakdown { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 15px; font-variant-numeric: tabular-nums; }
+.q-breakdown td { padding: 3px 0; border-bottom: 2px dotted #d9cfe9; }
+.q-breakdown td:last-child { text-align: right; font-weight: 700; white-space: nowrap; padding-left: 10px; }
+.q-breakdown .neg { color: #d6452b; }
+.q-fair { font-size: 14px; color: var(--ink-soft); margin: 8px 0 0; }
+.q-rank { margin-top: 12px; }
+.q-rank h3 { margin: 0 0 4px; font-family: var(--font-pixel); font-size: 13px; }
+.q-rank ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 2px; font-size: 16px; font-variant-numeric: tabular-nums; }
+.q-rank li.me { font-weight: 700; }
+.q-all { margin-top: 12px; font-size: 15px; }
+.q-all h3 { margin: 0; font-family: var(--font-pixel); font-size: 13px; }
+.q-all ul { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 4px; }
+.q-all li { display: grid; grid-template-columns: 22px minmax(0, 1fr); }
+.q-all .ok { color: #1d8f78; font-weight: 700; }
+.q-all .bad { color: #d6452b; font-weight: 700; }
+.q-all em { color: #b03a22; font-style: normal; }
+
+/* ── A nurse's phone ── */
+.q-status {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 0 0 0 3px var(--paper);
+  margin: 3px 3px 0;
+  font-size: 16px;
+  line-height: 1.3;
+}
+.q-status b { font-family: var(--font-pixel); font-weight: 400; font-size: 12px; color: var(--plum); }
+.q-app > .q-notes {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 760px;
+  align-self: center;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--night-2);
+  border: 4px solid var(--paper);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.q-ntabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.q-ntabs button { flex: 1 1 28%; font-family: var(--font-pixel); font-size: 11px; padding: 8px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 2px solid var(--paper); background: transparent; cursor: pointer; }
+.q-ntabs button.on { background: var(--paper); color: var(--ink); }
+.q-dentists { padding: 0 3px; }
+.q-views button.on { background: var(--gold); border-color: var(--gold); }
+.q-solo { font-size: 14px; color: #8a5a00; font-weight: 700; }
+/* The dentist's crew on the patient list. */
+.q-crew { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: var(--night); border: 3px solid #5a5288; }
+.q-crew p { margin: 0; font-size: 15px; color: #d6cff0; }
+.q-crew-slots { display: flex; flex-wrap: wrap; gap: 8px; }
+.q-crew-slots span { font-family: var(--font-pixel); font-size: 12px; padding: 4px 8px; border: 2px dashed #8a83b5; color: #b9b1d8; }
+.q-crew-slots span.on { border: 2px solid var(--mint); background: var(--mint); color: var(--ink); }
+.q-crew .q-crew-warn { color: var(--gold); font-weight: 700; }
+.q-dentists button.on { background: var(--gold); border-color: var(--gold); }
+.q-nbody { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; font-size: 17px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
+.q-nline b { display: block; font-family: var(--font-pixel); font-size: 11px; }
+.q-nline b.dentist { color: var(--sky); }
+.q-nline b.patient { color: var(--coral); }
+.q-scribble { background: #fff3c4; color: #2b3f8c; padding: 10px 12px; line-height: 1.55; }
+.q-scribble p { margin: 0; }
+.q-record { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.q-record div { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 8px; }
+.q-record dt { font-family: var(--font-pixel); font-size: 11px; color: #cfc6ee; padding-top: 3px; }
+.q-record dd { margin: 0; }
+.q-record dd.alert { color: var(--gold); font-weight: 700; }
+
+/* ── Phones ── */
+@media (max-width: 700px) {
+  .q-logo { font-size: 14px; }
+  .q-chip { font-size: 11px; padding: 0 7px; }
+  .q-clock { font-size: 14px; }
+  .q-clock, .q-back { min-width: 62px; }
+  .q-panel { font-size: 17px; }
+  .q-panel-in { padding: 10px 12px 12px; }
+  .q-next-row { padding: 8px 12px 12px; }
+  .q-next-row .px-btn { width: 100%; }
+  .q-field { font-size: 17px; margin: 8px 0 2px; }
+  .q-ask { font-size: 14px; }
+  .q-options { gap: 8px; margin-top: 8px; }
+  .q-opt { min-height: 50px; padding: 8px 20px; font-size: 16px; }
+  .q-opt.picked::before { left: 6px; }
+  .q-pip { width: 10px; }
+  .q-check { min-height: 64px; font-size: 14px; }
+  /* While charting, the scene becomes a small strip so the card fits. */
+  .sq[data-phase="chart"] .q-screen,
+  .sq[data-phase="sign"] .q-screen,
+  .sq[data-phase="result"] .q-screen { width: min(calc(100% - 16px), calc(13dvh * 16 / 9)); }
+  .q-score { font-size: 26px; }
+  .q-grade { width: 42px; height: 42px; font-size: 24px; }
+}
+
+/* Small phones: no logo, the chips need the whole top bar. */
+@media (max-width: 420px) {
+  .q-hud .q-logo { display: none; }
+}
+@media (max-width: 350px) {
+  .q-chip { font-size: 10px; padding: 0 5px; }
+  .q-hud, .q-hud-end { gap: 4px; }
+  .q-clock, .q-back { min-width: 0; }
+}
+
+.q-ntabs button { min-height: 44px; }
+.q-opt:has(.q-bot-tag) { padding-top: 16px; }
+
+/* Phone held sideways: no room for the scene while charting. */
+@media (max-height: 450px) {
+  .sq[data-phase="chart"] .q-screen,
+  .sq[data-phase="sign"] .q-screen,
+  .sq[data-phase="result"] .q-screen { display: none; }
+  .q-app { padding-block: 6px; gap: 6px; }
+  .q-next-row { padding-block: 6px 8px; }
+  .q-next-row.q-stack { flex-direction: row; }
+  .q-next-row .px-btn { width: auto; flex: 1 1 0; }
+  .q-ask { display: none; }
+  /* A nurse's reading gets no room sideways, so that screen scrolls instead. */
+  .sq.q-nurse { overflow-y: auto; }
+  .q-nurse .q-app { height: auto; min-height: 100%; }
+  .q-nurse .q-app > .q-notes, .q-nurse .q-nbody { flex: none; overflow: visible; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .q-enter, .q-tap, .q-clock.low { animation: none; }
+}
+
+/* Numbers in a plain bold face: pixel digits are hard to read from the back of a room. */
+.q-clock,
+.q-score,
+.q-patient-num,
+.q-grade,
+.q-breakdown td {
+  font-family: 'Atkinson Hyperlegible', 'Trebuchet MS', system-ui, sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  font-variant-numeric: tabular-nums;
+}

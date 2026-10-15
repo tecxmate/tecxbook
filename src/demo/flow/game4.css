@@ -1,0 +1,468 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Game 4 · Build StyleMod's AI, in the Scribe Quest look of the other games:
+   night with a dot grid, paper cards with the double pixel border, gold for
+   the one thing to press, the Game 3 team colours (Team 1 coral, Team 2 sky,
+   Team 3 plum, set by data-note A, B, C as for the Game 1 groups). Pixel face
+   for labels, plain bold for numbers. Projector: .g4 (inside .fh, sized in
+   em like host.css). Phone: .g4p (inside .fl, sized in px like player.css).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Projector ── */
+.g4 { display: flex; flex-direction: column; gap: 1.3em; width: 100%; }
+.g4-title {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-weight: 400;
+  font-size: 2.7em;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--gold);
+  text-shadow: 0.06em 0.06em 0 var(--coral), 0.12em 0.12em 0 #18142f;
+}
+.g4-title span { color: var(--paper); text-shadow: 0.06em 0.06em 0 #18142f; }
+.g4-title--center { text-align: center; }
+/* One plain heading per step that says what to do now. */
+.g4-h1 { font-size: 2.4em; line-height: 1.15; text-wrap: balance; }
+.g4-h1--center { text-align: center; align-self: center; max-width: 34em; }
+.g4-head { display: flex; align-items: center; justify-content: space-between; gap: 1.2em; }
+.g4-tools { margin-top: 0; }
+.g4-tools .fh-tool { display: inline-flex; align-items: center; gap: 0.4em; }
+
+.g4-teams { align-self: stretch; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.4em; text-align: left; }
+.g4-team {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: calc(var(--px) * 2);
+  background: var(--paper);
+  color: var(--ink);
+  border: var(--px) solid var(--ink);
+  box-shadow: 0 0 0 var(--px) var(--paper), 0 0 0 calc(var(--px) * 2) var(--ink);
+}
+.g4-team-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6em;
+  padding: 0.5em 0.8em;
+  background: var(--note);
+  border-bottom: var(--px) solid var(--ink);
+}
+.g4-team-head h2 { margin: 0; display: flex; align-items: center; gap: 0.3em; font-family: var(--font-pixel); font-weight: 400; font-size: 1.75em; line-height: 1; white-space: nowrap; }
+.g4-team-head span { font-family: var(--font-pixel); font-size: 0.8em; letter-spacing: 0.05em; white-space: nowrap; }
+[data-note="C"] > .g4-team-head { color: var(--paper); }
+.g4-team-body { flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.8em; padding: 1em 1.1em 1.1em; }
+.g4-team-body--center { align-items: center; justify-content: center; text-align: center; }
+.g4-team--empty { opacity: 0.5; }
+.g4-none { margin: auto 0; color: var(--ink-soft); font-style: italic; font-size: 1.2em; text-align: center; }
+.g4-count { margin: 0; font-size: 1.25em; font-weight: 700; color: var(--ink-soft); }
+
+/* Intro: the three teams and who is in each. */
+.g4-intro { align-items: center; text-align: center; gap: 1.1em; }
+.g4-intro .g4-title { font-size: 3.2em; }
+.g4-lead { max-width: 46em; }
+.g4-intro-row { align-self: stretch; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.4em; align-items: start; margin-top: 0.6em; }
+.g4-intro .g4-join { margin: calc(var(--px) * 2); padding: 0.7em; gap: 0.35em; }
+.g4-intro .g4-join .dm-qr { max-width: min(12em, 24vh); }
+.g4-intro .g4-join .fh-join-code b { font-size: 2em; }
+.g4-intro-row .g4-team-body { min-height: 0; }
+.g4-intro .g4-teams { margin-top: 0; }
+.g4-intro .g4-team-body { min-height: 13em; }
+.g4-intro .fh-names { flex: 1 1 auto; max-height: 15em; overflow: hidden; }
+.g4-intro .fh-names span { font-size: 1.15em; }
+.g4-intro .fh-names--small span { font-size: 0.95em; }
+.g4-intro .fh-names--tiny span { font-size: 0.8em; }
+[data-note="C"] .fh-names span { color: var(--paper); }
+
+/* Build and fix: the board clock and each team's progress. */
+.g4-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  padding: 0.12em 0.4em;
+  font-size: 3.6em;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--paper);
+  background: var(--night-2);
+  border: 3px solid var(--paper);
+}
+.g4-clock.low,
+.g4-clock.over { color: var(--coral); border-color: var(--coral); }
+.g4-clock.over { font-size: 2.6em; }
+.g4-build .g4-team-body { min-height: 19em; gap: 1.1em; }
+.g4-squares { width: 100%; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.4em; }
+.g4-sq {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  font-size: 1.6em;
+  color: #b9ad97;
+  background: #f3ecdf;
+  border: var(--px) solid #ddd0b8;
+}
+.g4-sq.on { color: var(--ink); background: var(--note); border-color: var(--ink); box-shadow: inset 0 -0.22em 0 rgba(24, 20, 47, 0.22); animation: g4-pop 0.3s steps(3) both; }
+[data-note="C"] .g4-sq.on { color: var(--paper); }
+@keyframes g4-pop { from { transform: scale(1.3); } to { transform: none; } }
+.g4-big { margin: 0; font-size: 1.7em; font-weight: 700; }
+.g4-big b { font-size: 1.9em; margin-right: 0.1em; }
+
+.g4-broke { margin: 0; font-family: var(--font-pixel); font-size: 1em; letter-spacing: 0.03em; color: #c4391f; }
+.g4-fix {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: 5.5em;
+  padding: 0.8em 1em;
+  font-size: 1.55em;
+  line-height: 1.2;
+  border: 3px dashed #c9bda6;
+}
+.g4-fix--none b { color: var(--ink-soft); }
+.g4-fix--box { background: #fff4cf; border: 3px solid var(--gold); }
+.g4-fix--done { background: var(--good-bg); border: 3px solid #1d8f78; animation: g4-pop 0.3s steps(3) both; }
+.g4-fix-tick { flex: none; display: grid; place-items: center; width: 1.6em; height: 1.6em; background: var(--mint); border: 3px solid var(--ink); }
+
+/* Six months later: a calendar strip fills month by month, then the teams appear. */
+.g4-months { display: flex; flex-direction: column; align-items: center; gap: 0.5em; }
+.g4-months .g4-title { font-size: 2.4em; }
+.g4-months .g4-title { animation: g4-type 0.8s steps(16) both; }
+@keyframes g4-type { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 -1em 0 0); } }
+.g4-months-bar { display: flex; gap: 0.45em; }
+.g4-months-bar span {
+  padding: 0.15em 0.6em;
+  font-family: var(--font-pixel);
+  font-size: 0.8em;
+  border: 3px solid #5a5288;
+  color: #8a82b4;
+  animation: g4-month 0.01s steps(1) both;
+}
+@keyframes g4-month { to { background: var(--gold); color: var(--ink); border-color: var(--ink); } }
+.g4-teams--late > * { animation: sq-enter 0.35s ease-out 1.2s both; }
+.g4-teams--late > :nth-child(2) { animation-delay: 1.35s; }
+.g4-teams--late > :nth-child(3) { animation-delay: 1.5s; }
+.g4-run { gap: 0.9em; }
+.g4-run .g4-team-body { gap: 0.6em; padding: 0.75em 1em 0.8em; }
+.g4-run .g4-meter b { font-size: 2.1em; }
+.g4-run .g4-team-head { padding: 0.4em 0.8em; }
+
+/* Debate: the one box where the teams disagree most, and a 30-second clock. */
+.g4-debate { align-items: center; text-align: center; gap: 1.1em; }
+.g4-debate .fh-kicker { color: var(--gold); }
+.g4-choices { align-self: stretch; display: flex; justify-content: center; gap: 1.6em; }
+.g4-choice {
+  flex: 0 1 26em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  padding: 0.9em 1.1em 1.1em;
+  text-align: left;
+  color: var(--ink);
+  background: var(--paper);
+  border: var(--px) solid var(--ink);
+  box-shadow: inset 0 0.5em 0 var(--note);
+  padding-top: 1.2em;
+  opacity: 0.6;
+}
+.g4-choice.on { opacity: 1; box-shadow: inset 0 0.5em 0 var(--note), 0 0 0 var(--px) var(--note); }
+.g4-choice span { font-family: var(--font-pixel); font-size: 0.95em; letter-spacing: 0.04em; }
+.g4-choice p { margin: 0; font-size: 1.6em; font-weight: 700; line-height: 1.25; }
+.g4-convince { display: flex; align-items: center; gap: 1.4em; padding: 0.5em 0.6em 0.5em 1.2em; color: var(--ink); background: var(--gold); border: 3px solid var(--ink); box-shadow: 0 0 0 3px var(--paper); }
+.g4-convince p { margin: 0; font-size: 2em; font-weight: 700; }
+.g4-debate-clock { display: flex; align-items: center; gap: 0.6em; }
+.g4-debate-clock b { min-width: 2.4em; padding: 0.05em 0.2em; font-size: 2.6em; line-height: 1; text-align: center; color: var(--paper); background: var(--ink); }
+.g4-debate-clock b.low,
+.g4-debate-clock b.over { color: var(--coral); }
+.g4-debate-clock .fh-tool { color: var(--ink) !important; border-color: var(--ink); }
+
+/* After the chaos cards: the two numbers they change. */
+.g4-mini { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5em; }
+.g4-mini-row { padding: 0.3em 0.6em 0.35em; background: #f3ecdf; border: 3px solid var(--ink); border-left-width: 0.55em; }
+.g4-mini-row dd { white-space: nowrap; }
+.g4-mini-row dt { font-family: var(--font-pixel); font-size: 0.78em; letter-spacing: 0.04em; color: var(--ink-soft); }
+.g4-mini-row dd { margin: 0; }
+.g4-mini-row b { font-size: 1.8em; line-height: 1.05; }
+.g4-mini-row.g4-meter--good b { color: #157a64; }
+.g4-mini-row.g4-meter--bad b { color: #c4391f; }
+.g4-mini-row small { font-weight: 700; color: var(--ink-soft); }
+
+/* The three meters: before → after; lower is better. */
+.g4-meters { margin: 0; display: flex; flex-direction: column; gap: 0.55em; }
+.g4-meter { padding: 0.4em 0.7em 0.45em; background: #f3ecdf; border: 3px solid var(--ink); border-left-width: 0.55em; }
+.g4-meter dt { font-family: var(--font-pixel); font-size: 0.78em; letter-spacing: 0.04em; color: var(--ink-soft); }
+.g4-meter dd { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 0.35em; }
+.g4-meter b { font-size: 2.3em; line-height: 1.05; }
+.g4-from { font-size: 1.3em; font-weight: 700; color: var(--ink-soft); }
+.g4-arrow { font-size: 1.2em; font-weight: 700; color: var(--ink-soft); }
+.g4-meter small { font-size: 1em; font-weight: 700; color: var(--ink-soft); }
+.g4-meter--good { border-left-color: var(--mint); }
+.g4-meter--good b { color: #157a64; }
+.g4-meter--bad { border-left-color: var(--coral); }
+.g4-meter--bad b { color: #c4391f; }
+.g4-meters--compact { gap: 0.4em; }
+.g4-meters--compact .g4-meter { padding: 0.3em 0.6em 0.35em; }
+.g4-meters--compact .g4-meter b { font-size: 1.8em; }
+.g4-meters--compact .g4-from { font-size: 1.15em; }
+
+.g4-stories { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.45em; }
+.g4-story { padding-left: 0.6em; font-size: 1.1em; line-height: 1.25; border-left: 0.3em solid var(--coral); }
+.g4-story b { color: #c4391f; }
+.g4-story--more { border-left-color: transparent; color: var(--ink-soft); font-style: italic; font-size: 1em; }
+p.g4-story--good { display: block; margin: 0; padding: 0.5em 0.7em; background: var(--good-bg); border: 3px solid #1d8f78; font-weight: 700; }
+
+/* Chaos: two pixel cards flip in, then each team's result is stamped. */
+.g4-chaos { align-items: center; }
+.g4-chaos-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2.6em; width: min(80em, 100%); margin-top: 0.8em; perspective: 60em; }
+.g4-chaos-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  min-height: 21em;
+  margin: calc(var(--px) * 2);
+  padding-bottom: 1.4em;
+  background: var(--paper);
+  color: var(--ink);
+  border: var(--px) solid var(--ink);
+  box-shadow: 0 0 0 var(--px) var(--coral), 0 0 0 calc(var(--px) * 2) var(--ink), 0 0.7em 0 calc(var(--px) * 2) #18142f;
+  animation: g4-flip 0.45s ease-out both;
+}
+@keyframes g4-flip { from { transform: rotateY(90deg); } to { transform: none; } }
+.g4-chaos-card header { display: flex; align-items: center; gap: 0.7em; padding: 0.55em 1em; background: var(--coral); border-bottom: var(--px) solid var(--ink); font-family: var(--font-pixel); font-size: 1.15em; letter-spacing: 0.05em; }
+.g4-chaos-letter { display: grid; place-items: center; width: 1.7em; height: 1.7em; font-size: 1.4em; color: var(--gold); background: var(--ink); }
+.g4-chaos-card h2 { margin: 0.35em 0.9em 0; font-family: var(--font-pixel); font-weight: 400; font-size: 2.6em; line-height: 1; text-transform: uppercase; }
+.g4-chaos-concept { margin: 0 1.4em; font-size: 1.35em; font-weight: 700; color: var(--ink-soft); }
+.g4-chaos-text { margin: 0.5em 1.1em 0; font-size: 2em; font-weight: 700; line-height: 1.22; text-wrap: balance; }
+
+
+.g4-hits { display: flex; flex-direction: column; gap: 0.5em; }
+.g4-hit { display: flex; flex-direction: column; gap: 0.1em; padding: 0.45em 0.7em 0.5em; border: 3px solid var(--ink); animation: g4-stamp 0.3s ease-out both; }
+.g4-hit + .g4-hit { animation-delay: 0.35s; }
+@keyframes g4-stamp { from { transform: scale(1.2); opacity: 0; } to { transform: none; opacity: 1; } }
+.g4-hit-card { font-family: var(--font-pixel); font-size: 0.75em; letter-spacing: 0.04em; color: var(--ink-soft); }
+.g4-hit b { font-size: 1.35em; line-height: 1.15; }
+.g4-hit small { font-size: 1em; line-height: 1.25; }
+.g4-hit--broke { background: var(--bad-bg); border-color: #c4391f; }
+.g4-hit--broke b { color: #b3261e; }
+.g4-hit--ok { background: var(--good-bg); border-color: #1d8f78; }
+.g4-hit--ok b { color: #157a64; }
+
+/* Rerun: version 1 → version 2 and the winner. */
+.g4-rerun { gap: 1.1em; }
+.g4-fixed { margin: 0; font-size: 1.2em; font-weight: 700; }
+.g4-now { margin: -0.4em 0 0; font-size: 1.05em; font-weight: 700; color: #157a64; }
+.g4-now.bad { color: #c4391f; }
+.g4-score { display: flex; align-items: baseline; gap: 0.5em; padding: 0.35em 0.8em; background: #f3ecdf; border: 3px solid var(--ink); }
+.g4-score span { font-family: var(--font-pixel); font-size: 0.9em; letter-spacing: 0.05em; }
+.g4-score b { font-size: 2.8em; line-height: 1; }
+.g4-score small { margin-left: auto; font-size: 1.1em; font-weight: 700; color: var(--ink-soft); }
+.g4-team--win { box-shadow: 0 0 0 var(--px) var(--gold), 0 0 0 calc(var(--px) * 2) var(--ink), 0 0 2.2em 0.5em rgba(255, 201, 60, 0.45); }
+.g4-team--win .g4-team-head span { padding: 0.15em 0.45em; color: var(--ink); background: var(--gold); border: 2px solid var(--ink); }
+.g4-team--win .g4-score { background: var(--gold); }
+.g4-close { max-width: none; align-items: center; text-align: center; }
+.g4-close blockquote { max-width: 26em; font-size: 2.7em; }
+
+/* Numbers in a plain bold face, as on the other boards. */
+.g4-clock,
+.g4-sq,
+.g4-big b,
+.g4-meter b,
+.g4-mini-row b,
+.g4-debate-clock b,
+.g4-from,
+.g4-score b,
+.g4-story b {
+  font-family: 'Atkinson Hyperlegible', 'Trebuchet MS', system-ui, sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .g4-months .g4-title,
+  .g4-months-bar span,
+  .g4-teams--late > *,
+  .g4-chaos-card,
+  .g4-hit,
+  .g4-sq.on,
+  .g4-fix--done { animation: none; }
+  .g4-months-bar span { background: var(--gold); color: var(--ink); border-color: var(--ink); }
+}
+
+/* ── Phone ── */
+.g4p { gap: 14px; }
+.g4p-q { margin: 0; font-size: 21px; font-weight: 700; line-height: 1.28; color: var(--paper); }
+
+/* The one line above the cards: talk first, then how the team stands. */
+.g4p-line { margin: 0; padding: 9px 12px; font-size: 16px; font-weight: 700; line-height: 1.35; color: var(--ink); border: 3px solid var(--ink); }
+.g4p-line--talk { background: var(--mint); }
+.g4p-line--split { background: var(--gold); }
+.g4p-line--agree { background: var(--good-bg); }
+.g4p-line--agree::before { content: '✓ '; }
+
+/* Answer cards: big, full sentences, the picked one gold. */
+.g4p-cards { display: flex; flex-direction: column; gap: 16px; }
+.g4p-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: auto;
+  min-height: 66px;
+  margin: 3px;
+  padding: 12px 14px;
+  text-align: left;
+  font-family: var(--font-read);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: 0 0 0 3px var(--paper), 0 6px 0 0 #15112b;
+}
+.g4p-card:active:not(:disabled) { filter: brightness(0.92); }
+.g4p-card.on { background: var(--gold); }
+.g4p-card.on::before { content: '✓ YOUR PICK'; font-family: var(--font-pixel); font-weight: 400; font-size: 11px; letter-spacing: 0.05em; }
+.g4p-card:disabled { cursor: default; }
+.g4p-card.locked { color: var(--ink-soft); background: #e6ddcd; box-shadow: 0 0 0 3px #e6ddcd; border-style: dashed; }
+.g4p-card-count { padding-top: 7px; font-size: 15px; font-weight: 400; color: var(--ink-soft); border-top: 2px dashed #d9ccb6; }
+.g4p-card.on .g4p-card-count { color: var(--ink); border-top-color: rgba(38, 33, 68, 0.3); }
+.g4p-card.locked .g4p-card-count { font-family: var(--font-pixel); font-size: 11px; letter-spacing: 0.04em; }
+
+.fl-actions.g4p-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
+
+/* Lists: the team's system, and the boxes to fix. */
+.g4p-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.g4p-list li { display: flex; }
+.g4p-row {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 15px;
+  line-height: 1.3;
+  color: var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink);
+}
+.g4p-row-num { display: grid; place-items: center; width: 36px; height: 36px; font-weight: 700; font-size: 18px; background: var(--note); border: 3px solid var(--ink); }
+[data-note="C"] .g4p-row-num { color: var(--paper); }
+.g4p-row-text { display: flex; flex-direction: column; gap: 3px; }
+.g4p-row-text b { font-family: var(--font-pixel); font-weight: 400; font-size: 12px; letter-spacing: 0.03em; }
+.g4p-row-text em { font-style: normal; font-weight: 700; color: #157a64; }
+.g4p-row.open { color: var(--ink-soft); background: #e6ddcd; border-style: dashed; }
+.g4p-row.open .g4p-row-num { background: transparent; }
+.g4p-row.broke { background: var(--bad-bg); border-color: #c4391f; }
+.g4p-row.broke b { color: #b3261e; }
+.g4p-row.mine { box-shadow: 0 0 0 3px var(--gold); }
+
+.g4p-status { margin: 0; padding: 9px 12px; font-size: 16px; line-height: 1.35; color: var(--paper); background: var(--night-2); border: 3px solid var(--gold); }
+.g4p-status.done { border-color: var(--mint); }
+
+/* Results */
+.g4p-meters { display: flex; flex-direction: column; gap: 10px; }
+.g4p-meter { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; padding: 8px 10px; background: #f3ecdf; border: 3px solid var(--ink); border-left-width: 8px; }
+.g4p-meter-label { flex-basis: 100%; font-family: var(--font-pixel); font-size: 11px; letter-spacing: 0.04em; color: var(--ink-soft); }
+.g4p-meter b { font-size: 28px; line-height: 1.1; }
+.g4p-meter small { font-size: 15px; font-weight: 700; color: var(--ink-soft); }
+.g4p-meter--good { border-left-color: var(--mint); }
+.g4p-meter--good b { color: #157a64; }
+.g4p-meter--bad { border-left-color: var(--coral); }
+.g4p-meter--bad b { color: #c4391f; }
+.g4p-meter-labels,
+.g4p-meter-note { margin: 0; font-size: 14px; color: var(--ink-soft); }
+.g4p-meter-labels { font-family: var(--font-pixel); font-size: 11px; letter-spacing: 0.04em; }
+.g4p-stories ul { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.g4p-story { margin: 0; padding: 10px 12px; font-size: 16px; line-height: 1.35; color: var(--ink); background: var(--bad-bg); border: 3px solid var(--coral); }
+.g4p-story b { font-family: var(--font-pixel); font-weight: 400; font-size: 12px; margin-right: 4px; }
+.g4p-story.good { background: var(--good-bg); border-color: #1d8f78; font-weight: 700; }
+.g4p-hits { display: flex; flex-direction: column; gap: 10px; }
+.g4p-hit { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; color: var(--ink); border: 3px solid var(--ink); }
+.g4p-hit-card { font-family: var(--font-pixel); font-size: 11px; letter-spacing: 0.04em; color: var(--ink-soft); }
+.g4p-hit b { font-size: 19px; line-height: 1.2; }
+.g4p-hit small { font-size: 15px; line-height: 1.3; }
+.g4p-hit.broke { background: var(--bad-bg); border-color: #c4391f; }
+.g4p-hit.broke b { color: #b3261e; }
+.g4p-hit.ok { background: var(--good-bg); border-color: #1d8f78; }
+.g4p-hit.ok b { color: #157a64; }
+.g4p-score { align-self: center; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 200px; margin: 6px; padding: 8px 22px 10px; color: var(--ink); background: var(--gold); border: 3px solid var(--ink); box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--ink); }
+.g4p-score span { font-family: var(--font-pixel); font-size: 11px; letter-spacing: 0.04em; }
+.g4p-score b { font-size: 34px; line-height: 1.05; }
+.g4p-say { margin: 0 0 calc(20px + env(safe-area-inset-bottom)); padding: 10px 12px; font-size: 17px; font-weight: 700; line-height: 1.35; color: var(--paper); border: 3px dashed var(--muted-on-night); }
+
+.g4p-meter b,
+.g4p-score b,
+.g4p-row-num {
+  font-family: 'Atkinson Hyperlegible', 'Trebuchet MS', system-ui, sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Run, step 1: every team's picks on the board, so each team can explain. */
+.g4-systems .g4-teams { margin-top: 0.5em; }
+.g4-system { list-style: none; margin: 0; padding: 0.45em 0.8em 0.6em; display: flex; flex-direction: column; gap: 0.35em; }
+.g4-system li { display: flex; flex-direction: column; gap: 0.1em; padding-bottom: 0.3em; border-bottom: 2px solid var(--line, rgba(0,0,0,0.12)); }
+.g4-system li:last-child { border-bottom: none; padding-bottom: 0; }
+.g4-system span { font-family: var(--font-pixel); font-size: 0.62em; letter-spacing: 0.05em; color: var(--ink-soft); text-transform: uppercase; }
+.g4-system p { margin: 0; font-size: 0.78em; line-height: 1.22; font-weight: 600; color: var(--ink); }
+.g4-system-empty { display: block; padding: 2em 1em; text-align: center; }
+.g4p-system { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5em; }
+.g4p-system li { background: var(--paper); color: var(--ink); border: 3px solid var(--ink); padding: 0.55em 0.7em; }
+.g4p-system span { display: block; font-family: var(--font-pixel); font-size: 0.7em; letter-spacing: 0.05em; color: var(--ink-soft); text-transform: uppercase; }
+.g4p-system p { margin: 0.15em 0 0; font-size: 0.95em; line-height: 1.3; font-weight: 600; }
+
+/* Fix: list rows say what tapping does. */
+.g4p-row-go { align-self: center; font-weight: 700; font-size: 15px; color: #1f6fb2; white-space: nowrap; }
+
+/* Fix a box: the current card, then the replacements as radio options. */
+.g4p-replace { display: flex; flex-direction: column; gap: 10px; }
+.g4p-replace-label { margin: 0; font-family: var(--font-pixel); font-size: 12px; letter-spacing: 0.05em; color: var(--muted-on-night); text-transform: uppercase; }
+.g4p-replace-with { margin-top: 6px; color: var(--gold); }
+.g4p-current { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: #d9d2c4; color: #4b4560; border: 3px solid #8a8299; }
+.g4p-current p { margin: 0; font-size: 17px; line-height: 1.35; }
+.g4p-current.replaced p { text-decoration: line-through; text-decoration-thickness: 2px; text-decoration-color: rgba(75, 69, 96, 0.45); }
+.g4p-current-tag { align-self: flex-start; padding: 2px 8px; font-family: var(--font-pixel); font-size: 11px; letter-spacing: 0.05em; background: #8a8299; color: #fff; }
+.g4p-options { display: flex; flex-direction: column; gap: 10px; }
+.g4p-option { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; align-items: start; width: 100%; padding: 14px; text-align: left; font: inherit; font-size: 17px; line-height: 1.35; font-weight: 600; background: var(--paper); color: var(--ink); border: 3px solid var(--ink); cursor: pointer; }
+.g4p-option.on { background: var(--gold); box-shadow: 0 0 0 3px var(--gold); }
+.g4p-option:disabled { opacity: 0.7; }
+.g4p-radio { width: 24px; height: 24px; margin-top: 1px; border-radius: 50%; border: 3px solid var(--ink); background: #fff; }
+.g4p-option.on .g4p-radio { background: var(--ink); box-shadow: inset 0 0 0 4px #fff; }
+.g4p-option-text { display: flex; flex-direction: column; gap: 4px; }
+.g4p-option-text em { font-style: normal; font-size: 14px; font-weight: 700; color: #157a64; }
+
+/* Rerun, step 2: how the simulation scored every system. */
+.g4-how-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 1.4em; margin-top: 0.6em; text-align: left; }
+.g4-how-model, .g4-how-rules { background: var(--paper); color: var(--ink); border: var(--px) solid var(--ink); padding: 0.7em 0.9em; min-width: 0; }
+.g4-how-label { margin: 0 0 0.4em; font-family: var(--font-pixel); font-size: 0.62em; letter-spacing: 0.06em; color: var(--ink-soft); }
+.g4-how-model ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.32em; }
+.g4-how-model li { padding-bottom: 0.3em; border-bottom: 2px solid rgba(0, 0, 0, 0.1); }
+.g4-how-model li:last-child { border-bottom: none; padding-bottom: 0; }
+.g4-how-model span { font-family: var(--font-pixel); font-size: 0.56em; letter-spacing: 0.05em; color: #157a64; text-transform: uppercase; }
+.g4-how-model p { margin: 0.05em 0 0; font-size: 0.74em; line-height: 1.22; font-weight: 600; }
+.g4-how-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5em; margin-bottom: 0.6em; }
+.g4-how-stats p { margin: 0; padding: 0.35em 0.45em; background: #f3ecdf; border: 3px solid var(--ink); font-size: 0.66em; line-height: 1.2; font-weight: 600; }
+.g4-how-stats b { display: block; font-family: var(--font-pixel); font-weight: 400; font-size: 1.9em; line-height: 1.1; color: var(--ink); }
+.g4-how-stats small { display: block; font-size: 0.85em; font-weight: 500; color: var(--ink-soft); }
+.g4-how-steps { margin: 0 0 0.6em; padding-left: 1.1em; display: flex; flex-direction: column; gap: 0.25em; font-size: 0.68em; line-height: 1.28; }
+.g4-how-chart { margin: 0; }
+.g4-how-chart figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.4em; font-family: var(--font-pixel); font-size: 0.56em; letter-spacing: 0.05em; color: var(--ink-soft); }
+.g4-how-key { font-family: inherit; }
+.g4-how-key i { display: inline-block; width: 0.9em; height: 0.9em; margin: 0 0.3em 0 0.8em; vertical-align: -0.1em; border: 2px solid var(--ink); }
+.g4-how-key i.ok, .g4-bar-ok { background: #3cb88f; fill: #3cb88f; }
+.g4-how-key i.broke, .g4-bar-broke { background: #c9c1d3; fill: #c9c1d3; }
+.g4-how-chart svg { display: block; width: 100%; height: auto; max-height: 26vh; overflow: visible; }
+.g4-axis { stroke: var(--ink); stroke-width: 2; }
+.g4-axis-label { font-size: 12px; text-anchor: middle; fill: var(--ink-soft); font-weight: 700; }
+.g4-mark line { stroke: var(--note); stroke-width: 4; }
+.g4-mark text { font-size: 13px; font-weight: 800; text-anchor: middle; fill: var(--ink); paint-order: stroke; stroke: var(--note); stroke-width: 6px; }
+.g4-how-teams { margin: 0.3em 0 0; display: flex; flex-wrap: wrap; gap: 0.4em; font-size: 0.66em; font-weight: 600; }
+.g4-how-teams span { padding: 0.2em 0.45em; background: var(--note); border: 3px solid var(--ink); }
+.g4-how-teams span[data-note="C"] { color: var(--paper); }
+.g4-how-teams b { font-family: var(--font-pixel); font-weight: 400; margin-right: 0.35em; }
