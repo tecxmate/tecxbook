@@ -185,6 +185,8 @@ interface Player {
   g3: { team: string; job: string; name: string; follow: string } | null;
   /** Game 4 picks (the team is the Game 1 group). Missing in rooms from before Game 4. */
   g4?: G4PlayerState | null;
+  /** Ids this player had on earlier phones or browsers (rejoined by name), so an undo finds them. */
+  prevIds?: string[];
 }
 
 interface Room {
@@ -237,6 +239,9 @@ export class ResultsRoom {
   phones = new Map<string, Phone>();
   /** When each Games 1-4 phone last asked (in memory): a quiet one can be taken back by name. */
   seen = new Map<string, number>();
+  /** When this copy of the room started. Phones not heard from since count as seen then, so
+   *  right after a restart nobody's name can be taken until they have had time to ask again. */
+  startedAt = Date.now();
   /** The whole room, kept in memory: polls cost no storage reads. Every write
    *  goes to both, and a restarted room loads it back from storage once. */
   room: Room | null = null;
@@ -446,12 +451,12 @@ export class ResultsRoom {
       } else {
         // Back with a new phone or browser: the same name takes back the old
         // player (team, answers, score) if that phone has gone quiet.
-        const back = [...room.players.values()].find((p) => sameName(p.nickname, nickname) && now - (this.seen.get(p.id) ?? 0) > REJOIN_IDLE_MS);
+        const back = [...room.players.values()].find((p) => sameName(p.nickname, nickname) && now - (this.seen.get(p.id) ?? this.startedAt) > REJOIN_IDLE_MS);
         if (back) {
           room.players.delete(back.id);
           await this.storage.delete(`p:${back.id}`);
           this.seen.delete(back.id);
-          me = { ...back, id };
+          me = { ...back, id, prevIds: [...(back.prevIds ?? []), back.id] };
           await this.savePlayer(room, me);
           return json({ me, now, rejoined: true });
         }
@@ -616,6 +621,8 @@ export class ResultsRoom {
           await this.clearAnswers(room, (p) => {
             p.g1Selected = [];
             p.g1SubmittedAt = null;
+            // The replay is played on the note of the group the player is in now.
+            delete p.g1Note;
             delete p.asks.g1_predict;
           });
         }
@@ -666,7 +673,19 @@ export class ResultsRoom {
         // Undo the last clear or reset, once: every player and Game 3 result as they were.
         const backup = await this.storage.get<Backup>('backup');
         if (!backup) return json({ error: 'Nothing to restore' }, 404);
-        for (const p of backup.players) await this.savePlayer(room, p);
+        // A student who came back on a new browser after the copy was kept has a
+        // new id: their answers go to the phone they use now, not to a second player.
+        const kept = new Set(backup.players.map((p) => p.id));
+        const taken = new Set<string>();
+        for (const old of backup.players) {
+          const all = [...room.players.values()].filter((p) => !taken.has(p.id));
+          const byName = all.filter((p) => !kept.has(p.id) && sameName(p.nickname, old.nickname));
+          const current = room.players.get(old.id) ?? all.find((p) => p.prevIds?.includes(old.id)) ?? (byName.length === 1 ? byName[0] : undefined);
+          const id = current?.id ?? old.id;
+          taken.add(id);
+          const prevIds = [...new Set([...(old.prevIds ?? []), ...(current?.prevIds ?? []), ...(id === old.id ? [] : [old.id])])];
+          await this.savePlayer(room, { ...old, id, ...(prevIds.length ? { prevIds } : {}) });
+        }
         const have = new Set(room.results.map((r) => r.id));
         for (const r of backup.results) {
           if (have.has(r.id)) continue;

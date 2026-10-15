@@ -147,7 +147,7 @@ test('incident (b): after 20 s of silence the same name takes the old player bac
   const back = await r.join('p9', ' MAI ', 'C');
   assert.equal(back.status, 200);
   assert.equal(back.body.rejoined, true);
-  assert.deepEqual(back.body.me, { ...old, id: 'p9' });
+  assert.deepEqual(back.body.me, { ...old, id: 'p9', prevIds: ['p1'] }); // the old id is kept for undo
   assert.deepEqual(await score(r, 'p9'), { ...oldScore, id: 'p9' });
   assert.equal(await player(r, 'p1'), undefined, 'the old id is gone');
   assert.equal((await r.phone('p1')).me, null);
@@ -161,6 +161,7 @@ test('incident (b): after 20 s of silence the same name takes the old player bac
   assert.equal(locked.status, 200);
   assert.equal(locked.body.rejoined, true);
   assert.equal(locked.body.me.g1NoteId, 'A');
+  assert.deepEqual(locked.body.me.prevIds, ['p1', 'p9']);
   assert.equal((await r.join('p11', 'Stranger')).status, 423);
 }));
 
@@ -196,9 +197,7 @@ test("incident (b): the lecturer's move keeps Game 1 graded on the note played a
   assert.equal((await player(r, 'p2')).g1Note, undefined);
 }));
 
-test('incident (b): after a move, playing Game 1 again is graded on the new note', {
-  todo: 'demo/worker.ts:612-620 (phase g1_play) clears the answers but not p.g1Note, so the replay is scored against the old note while the phone shows the new one (Player.tsx:455 uses g1NoteId)',
-}, () => withRoom(async (r) => {
+test('incident (b): after a move, playing Game 1 again is graded on the new note', () => withRoom(async (r) => {
   await r.join('p1', 'Mai', 'A');
   await r.phase('g1_play');
   await r.send('p1', 'g1', { version: 1, selected: ALL_A });
@@ -209,9 +208,7 @@ test('incident (b): after a move, playing Game 1 again is graded on the new note
   assert.equal((await score(r, 'p1')).g1, 300);
 }));
 
-test('incidents (a)+(b): restore after the student rejoined gives the answers to the phone in use', {
-  todo: 'demo/worker.ts:669 restores the backup by player id, so the old id comes back as a second "Mai" holding the answers, and the rejoined phone keeps 0',
-}, () => withRoom(async (r, clock) => {
+test('incidents (a)+(b): restore after the student rejoined gives the answers to the phone in use', () => withRoom(async (r, clock) => {
   await r.join('p1', 'Mai', 'A');
   await r.phase('g1_play');
   await r.send('p1', 'g1', { version: 1, selected: ALL_A });
@@ -272,9 +269,7 @@ test('restart durability: a restarted room loads every player, answer, chart, se
   assert.equal((await r.host('claim', {}, 'other-laptop')).status, 403);
 }));
 
-test('restart durability: right after a restart, a new browser cannot take an active player\'s name', {
-  todo: 'demo/worker.ts:449 reads last-seen times from memory only (`seen`, ?? 0), so after a restart every player counts as silent until their phone polls again',
-}, () => withRoom(async (r, clock) => {
+test('restart durability: right after a restart, a new browser cannot take an active player\'s name', () => withRoom(async (r, clock) => {
   await r.join('p1', 'Mai', 'A');
   await r.phase('g1_play');
   await r.send('p1', 'g1', { version: 1, selected: ALL_A });
@@ -283,4 +278,27 @@ test('restart durability: right after a restart, a new browser cannot take an ac
   const twin = await r.join('p2', 'Mai');
   assert.equal(twin.body.rejoined, undefined);
   assert.ok(await player(r, 'p1'));
+  // A phone that really is gone can still be taken back, 20 s after the restart.
+  clock.tick(20_001);
+  const back = await r.join('p3', 'mai');
+  assert.equal(back.body.rejoined, true);
+  assert.equal((await score(r, 'p3')).g1, 300);
 }));
+
+test('incident (a)+(b): undo "Start again" after a student rejoined on a new browser keeps one player', () => withRoom(async (r) => {
+  await r.join('p1', 'Mai', 'A');
+  await r.join('p2', 'An', 'B');
+  await r.phase('g1_play');
+  await r.send('p1', 'g1', { version: 1, selected: ALL_A, submit: true });
+  await r.host('reset'); // pressed by mistake
+  await r.join('p9', 'mai', 'B'); // Mai, on a new browser, joins the empty room
+  await r.join('p2', 'An', 'B'); // An, same phone
+  await r.host('restore');
+  const b = await r.board();
+  assert.deepEqual(b.players.map((p: { id: string }) => p.id).sort(), ['p2', 'p9']);
+  const mai = await player(r, 'p9');
+  assert.equal(mai.g1NoteId, 'A', 'back in her old group');
+  assert.deepEqual(mai.prevIds, ['p1']);
+  assert.equal((await score(r, 'p9')).g1, 300);
+}));
+

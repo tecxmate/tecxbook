@@ -628,7 +628,7 @@ function G1Reveal({ step, p, ask, act, total }: {
       <button type="button" className="fl-btn fl-btn--ghost fl-btn--small fl-link" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         {open ? 'Hide my note' : 'See my note'}
       </button>
-      {open && <MarkedNote noteId={p.g1NoteId} selected={p.g1Selected} />}
+      {open && <MarkedNote noteId={p.g1Note ?? p.g1NoteId} selected={p.g1Selected} />}
     </LookUp>
   );
 }
